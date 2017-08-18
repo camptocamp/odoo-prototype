@@ -5,7 +5,7 @@
 from odoo import models, fields, api, exceptions, _
 from odoo.osv import expression
 from odoo.tools.safe_eval import safe_eval, test_python_expr
-from ..utils import csv_from_data
+from ..utils import csv_from_data, force_company
 from ..config import (
     SPECIAL_FIELDS,
     SONG_TYPES,
@@ -161,10 +161,23 @@ class Song(models.Model):
     def dj_template_vars(self):
         """Return context variables to render template."""
         self.ensure_one()
-        return {
+        res = {
             'song': self,
             'header_exclude': self.get_csv_field_names_exclude(),
         }
+        if self.song_type == 'settings':
+            # Some settings wizard are applied for all companies
+            # and other must be launched once per company
+            # provide companies for settings type
+            # if wizard is for all companies we provide one company to setup
+            companies = self.env['res.company'].search([])
+            if 'company_id' in self.song_model:
+                res['companies'] = companies
+                res['multicompany'] = True
+            else:
+                res['companies'] = companies[0]
+                res['multicompany'] = False
+        return res
 
     @api.multi
     @api.depends('model_id.model', 'song_type')
@@ -410,10 +423,13 @@ class Song(models.Model):
         ).replace('/', '.').replace('.py', '')
         return '{}::{}'.format(path, self.name)
 
-    def dj_get_settings_vals(self):
+    def dj_get_settings_vals(self, company=None):
         """Prepare values for res.config settings song."""
-        # TODO: handle multicompany
-        values = self.song_model.create({}).read(load='_classic_write')[0]
+        if not company:
+            company = self.env['res.company'].search([], count=1)
+
+        with force_company(self.env, company.id):
+            values = self.song_model.create({}).read(load='_classic_write')[0]
 
         res = {}
         fields_info = self.song_model.fields_get()
