@@ -165,18 +165,6 @@ class Song(models.Model):
             'song': self,
             'header_exclude': self.get_csv_field_names_exclude(),
         }
-        if self.song_type == 'settings':
-            # Some settings wizard are applied for all companies
-            # and other must be launched once per company
-            # provide companies for settings type
-            # if wizard is for all companies we provide one company to setup
-            companies = self.env['res.company'].search([])
-            if 'company_id' in self.song_model:
-                res['companies'] = companies
-                res['is_company_settings'] = True
-            else:
-                res['companies'] = companies[0]
-                res['is_company_settings'] = False
         return res
 
     @api.multi
@@ -423,39 +411,52 @@ class Song(models.Model):
         ).replace('/', '.').replace('.py', '')
         return '{}::{}'.format(path, self.name)
 
-    def dj_get_settings_vals(self, company=None):
-        """Prepare values for res.config settings song."""
-        if not company:
-            company = self.env['res.company'].search([], count=1)
+    def dj_get_settings_vals(self):
+        """Prepare of values for res.config settings song.
 
-        with force_company(self.env, company.id):
-            values = self.song_model.create({}).read(load='_classic_write')[0]
+        Returns [(song_name, settings_values), ...]
+        """
 
-        res = {}
-        fields_info = self.song_model.fields_get()
-        for fname, val in values.iteritems():
-            if fname in SPECIAL_FIELDS:
-                continue
-            finfo = fields_info[fname]
-            if val and finfo['type'] == 'many2one':
-                record = self.env[finfo['relation']].browse(val)
-                ext_id = record._dj_export_xmlid()
-                val = self.anthem_xmlid_value(ext_id)
-            # knowing which field does what is always difficult
-            # if you don't check settings schema definition.
-            # Let's add some helpful info.
-            label = finfo['string']
-            if finfo['type'] == 'selection':
-                label += u': {}'.format(dict(finfo['selection'])[val])
-                val = u"'{}'".format(val)
-            elif finfo['type'] == 'text':
-                val = u'"""{}"""'.format(val)
-            elif finfo['type'] in ('date', 'datetime'):
-                val = u"'{}'".format(val)
-            res[fname] = {
-                'val': val,
-                'label': label,
-            }
+        global_settings = 'company_id' not in self.song_model
+        kwargs = {'limit': 1} if global_settings else {}
+
+        companies = self.env['res.company'].search([], **kwargs)
+
+        res = []
+        for company in companies:
+            with force_company(self.env, company.id):
+                wizard = self.song_model.create({})
+                values = wizard.read(load='_classic_write')[0]
+            cp_values = {}
+            fields_info = self.song_model.fields_get()
+            for fname, val in values.iteritems():
+                if fname in SPECIAL_FIELDS:
+                    continue
+                finfo = fields_info[fname]
+                if val and finfo['type'] == 'many2one':
+                    record = self.env[finfo['relation']].browse(val)
+                    ext_id = record._dj_export_xmlid()
+                    val = self.anthem_xmlid_value(ext_id)
+                # knowing which field does what is always difficult
+                # if you don't check settings schema definition.
+                # Let's add some helpful info.
+                label = finfo['string']
+                if finfo['type'] == 'selection':
+                    label += u': {}'.format(dict(finfo['selection'])[val])
+                    val = u"'{}'".format(val)
+                elif finfo['type'] == 'text':
+                    val = u'"""{}"""'.format(val)
+                elif finfo['type'] in ('date', 'datetime'):
+                    val = u"'{}'".format(val)
+                cp_values[fname] = {
+                    'val': val,
+                    'label': label,
+                }
+            company_codename = company.aka
+            song_name = self.name
+            if not global_settings and self._is_multicompany_env():
+                song_name += '_{}'.format(company_codename)
+            res.append((song_name, company.name, cp_values))
         return res
 
     def anthem_xmlid_value(self, xmlid):
