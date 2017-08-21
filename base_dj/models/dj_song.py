@@ -173,10 +173,10 @@ class Song(models.Model):
             companies = self.env['res.company'].search([])
             if 'company_id' in self.song_model:
                 res['companies'] = companies
-                res['multicompany'] = True
+                res['is_company_settings'] = True
             else:
                 res['companies'] = companies[0]
-                res['multicompany'] = False
+                res['is_company_settings'] = False
         return res
 
     @api.multi

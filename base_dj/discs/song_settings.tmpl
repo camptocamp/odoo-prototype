@@ -1,7 +1,7 @@
 {% for company in companies %}
 @anthem.log
-def {{ song.name }}{% if multicompany %}_{{ company.aka }}{% endif %}(ctx):
-    """ Setup {{ song.model_id.model }}{% if multicompany %} for {{ company.name }}{% endif %} """
+def {{ song.name }}{% if is_company_settings %}_{{ company.aka }}{% endif %}(ctx):
+    """ Setup {{ song.model_id.model }}{% if is_company_settings %} for {{ company.name }}{% endif %} """
     model = ctx.env['{{ song.model_id.model }}'].with_context({{ song.model_context }})
     model.create({
         {% for key, value in song.dj_get_settings_vals(company=company).iteritems() %}# {{ value['label'] }}  # noqa
@@ -10,7 +10,7 @@ def {{ song.name }}{% if multicompany %}_{{ company.aka }}{% endif %}(ctx):
     }).execute()
 {% endfor %}
 
-{% if multicompany %}
+{% if is_company_settings %}
 @anthem.log
 def account_config(ctx):
     {% for company in companies %}{{ song.name }}_{{ company.aka }}(ctx)
