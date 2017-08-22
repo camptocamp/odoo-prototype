@@ -421,14 +421,9 @@ class Song(models.Model):
                 continue
             finfo = fields_info[fname]
             if val and finfo['type'] == 'many2one':
-                domain = [('model', '=', finfo['relation']),
-                          ('res_id', '=', val),
-                          ('module', 'not in', ('__export__', '__setup__'))]
-                # Find xmlid if it exists
-                ext_id = self.env['ir.model.data'].search(
-                    domain, order='create_date desc', limit=1)
-                if ext_id:
-                    val = self.anthem_xmlid_value(ext_id.complete_name)
+                record = self.env[finfo['relation']].browse(val)
+                ext_id = record._dj_export_xmlid()
+                val = self.anthem_xmlid_value(ext_id.complete_name)
             # knowing which field does what is always difficult
             # if you don't check settings schema definition.
             # Let's add some helpful info.
