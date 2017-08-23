@@ -11,6 +11,7 @@ class Property(models.Model):
 
     @api.multi
     def _update_values(self, values):
+        """Inverse xmlid value to reference value."""
         if self.env.context.get('xmlid_value_reference', False):
             record = self.env.ref(values.get('value_reference'))
             value = u'%s,%i' % (record._name, record.id)
@@ -18,16 +19,16 @@ class Property(models.Model):
         return super(Property, self)._update_values(values)
 
     @api.multi
-    def _export_rows(self, fields):
-        res = super(Property, self)._export_rows(fields)
-        position = fields.index([u'value_reference'])
-        for row in res:
-            reference = row[position]
-            if reference:
-                ref_list = reference.split(',')
-                model_data = self.env['ir.model.data'].search(
-                    [('model', '=', ref_list[0]),
-                     ('res_id', '=', ref_list[1])], limit=1)
-                xmlid = u'%s.%s' % (model_data.module, model_data.name)
-                row[position] = xmlid
+    def read(self, fields=None, load='_classic_read'):
+        """Get `value_reference` as xmlid."""
+        res = super(Property, self).read(fields=fields, load=load)
+        if not self.env.context.get('xmlid_value_reference'):
+            return res
+        # wipe cache otherwise we gonna get the std value in any case
+        self.invalidate_cache(['value_reference'])
+        for rec in res:
+            if rec.get('value_reference'):
+                model, res_id = rec['value_reference'].split(',')
+                value = self.env[model].browse(int(res_id))._dj_export_xmlid()
+                rec['value_reference'] = value
         return res
