@@ -1,0 +1,13 @@
+<odoo>
+
+  <record model="dj.collection" id="dj_collection_base">
+    <field name="name">Default collection</field>
+  </record>
+
+  <record model="dj.collection.album" id="dj_collection_base_album">
+    <field name="collection_id" ref="dj_collection_base" />
+    <field name="sequence" eval="0" />
+    <field name="compilation_id" ref="dj_compilation_base.dj_base_comp" />
+  </record>
+
+</odoo>

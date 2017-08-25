@@ -1,0 +1,23 @@
+<odoo>
+  <record model="dj.genre" id="dj_base_genre">
+    <field name="name">base</field>
+  </record>
+
+  <record model="dj.compilation" id="dj_base_comp">
+    <field name="name">base</field>
+    <field name="genre_id" ref="dj_base_genre" />
+  </record>
+
+  <record model="dj.song" id="dj_song_company">
+    <field name="compilation_id" ref="dj_base_comp"/>
+    <field name="model_id" ref="base.model_res_company"/>
+    <field name="sequence" eval="0" />
+  </record>
+
+  <record model="dj.song" id="dj_song_lang">
+    <field name="compilation_id" ref="dj_base_comp"/>
+    <field name="model_id" ref="base.model_res_lang"/>
+    <field name="sequence" eval="0" />
+  </record>
+
+</odoo>
