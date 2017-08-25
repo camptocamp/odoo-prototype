@@ -21,6 +21,7 @@
         'security/ir.model.access.csv',
         'data/equalizer_xmlid.xml',
         'views/company.xml',
+        'views/collection.xml',
         'views/compilation.xml',
         'views/song.xml',
         'views/equalizer_xmlid.xml',

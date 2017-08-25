@@ -80,6 +80,8 @@ class Compilation(models.Model):
         """Return all files to burn into the compilation."""
         self.ensure_one()
         files = []
+        # TODO: we must make sure files do not override each other
+        # we can have several files for the same model (eg: res.partner)
         for song in self.song_ids:
             track = song.burn_track()
             if track:

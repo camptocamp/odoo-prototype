@@ -46,3 +46,12 @@ class DJ(http.Controller):
         headers = self._make_download_headers(
             content, filename, 'application/zip')
         return request.make_response(content, headers=headers)
+
+    @http.route(
+        '/dj/download/collection/<model("dj.collection"):collection>',
+        type='http', auth="user", website=False)
+    def download_collection(self, collection, **kwargs):
+        filename, content = collection.burn()
+        headers = self._make_download_headers(
+            content, filename, 'application/zip')
+        return request.make_response(content, headers=headers)
