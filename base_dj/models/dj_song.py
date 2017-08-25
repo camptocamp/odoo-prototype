@@ -70,7 +70,9 @@ class Song(models.Model):
             ('compute', '=', False),
         ]""",
     )
-    csv_path = fields.Char(default='data/{data_mode}/generated/{model}.csv')
+    csv_path = fields.Char(
+        default='data/{data_mode}/generated/{genre}-{model}.csv'
+    )
     domain = fields.Char(default="[]")
     python_code = fields.Text(
         default=DEFAULT_PYTHON_CODE,
