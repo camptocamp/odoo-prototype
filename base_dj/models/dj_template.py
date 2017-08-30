@@ -43,8 +43,8 @@ class TemplateMixin(models.AbstractModel):
             loader=jinja2.FileSystemLoader(path)
         ).get_template(filename)
 
-    def dj_render_template(self, template_vars=None):
+    def dj_render_template(self, path=None, template_vars=None):
         """Render template."""
-        template = self.dj_template()
+        template = self.dj_template(path=path)
         template_vars = template_vars or self.dj_template_vars()
         return template.render(**template_vars)

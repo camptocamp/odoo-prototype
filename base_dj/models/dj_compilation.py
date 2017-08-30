@@ -30,6 +30,7 @@ class DJcompilation(models.Model):
         selection=[
             ('install', 'Install'),
             ('demo', 'Demo'),
+            ('test', 'Test (fixtures)'),
         ],
         default='install',
     )
@@ -92,16 +93,26 @@ class DJcompilation(models.Model):
         files.append((init_file, '#'))
         files.append(self.burn_disc())
         files.append(self.burn_dev_readme())
+        files.append(self.burn_tests_common())
         return files
 
+    def _path_interpolation_data(self):
+        return self.read()[0]
+
     def disc_full_path(self):
-        return self.disc_path.format(**self.read()[0])
+        path_data = self._path_interpolation_data()
+        if self.data_mode == 'test':
+            return u'{genre}.py'.format(**path_data)
+        return self.disc_path.format(**path_data)
 
     @api.multi
     def burn_disc(self):
         """Burn the disc with songs."""
         self.ensure_one()
-        content = self.dj_render_template()
+        path = None
+        if self.data_mode == 'test':
+            path = 'base_dj:discs/tests_disc.tmpl'
+        content = self.dj_render_template(path=path)
         # make sure PEP8 is safe
         # no triple empty line, only an empty line at the end
         content = content.replace('\n\n\n\n', '\n\n\n').strip() + '\n'
@@ -111,8 +122,19 @@ class DJcompilation(models.Model):
     def burn_dev_readme(self):
         """Burn and additional readme for developers."""
         self.ensure_one()
-        template = self.dj_template(path='base_dj:discs/DEV_README.tmpl')
+        tmpl_path = 'base_dj:discs/DEV_README.tmpl'
+        if self.data_mode == 'test':
+            tmpl_path = 'base_dj:discs/tests_DEV_README.tmpl'
+        template = self.dj_template(path=tmpl_path)
         return 'DEV_README.rst', template.render(compilation=self)
+
+    @api.multi
+    def burn_tests_common(self):
+        """Burn and additional common file for tests."""
+        self.ensure_one()
+        tmpl_path = 'base_dj:discs/tests_common.py.tmpl'
+        template = self.dj_template(path=tmpl_path)
+        return 'common.py', template.render(compilation=self)
 
     @api.multi
     def burn(self):

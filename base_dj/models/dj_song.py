@@ -67,7 +67,8 @@ class Song(models.Model):
             ('compute', '=', False),
         ]""",
     )
-    csv_path = fields.Char(default='data/{data_mode}/generated/{model}.csv')
+    csv_path = fields.Char(
+        default='data/{data_mode}/generated/{model_name}.csv')
     domain = fields.Char(default="[]")
     python_code = fields.Text(
         default=DEFAULT_PYTHON_CODE,
@@ -221,12 +222,19 @@ class Song(models.Model):
             return None
         return self.env.get(self.model_id.model)
 
+    def _path_interpolation_data(self):
+        data = self.read()[0]
+        # XXX: backward compat for existing songs
+        data['model'] = data['model_name']
+        return data
+
     def real_csv_path(self):
         """Final csv path into zip file."""
-        return self.csv_path.format(
-            model=self.song_model._name,
-            data_mode=self.compilation_id.data_mode,
-        )
+        path_data = self._path_interpolation_data()
+        path_data.update(self.compilation_id._path_interpolation_data())
+        if self.compilation_id.data_mode == 'test':
+            return u'data/{model_name}.csv'.format(**path_data)
+        return self.csv_path.format(**path_data)
 
     @api.multi
     def burn_track(self):
