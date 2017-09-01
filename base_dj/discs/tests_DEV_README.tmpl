@@ -22,3 +22,11 @@ You can load data like this:
 
     def test_foo(self):
         main(ContextWithEnv(self.env))
+
+{% for song in compilation.song_ids %}{% if song.has_records %}
+Involved modules by song `{{ song.name }}` ({{ song.model_name}}):
+
+{{ song._involved_modules_txt() }}{% endif %}
+
+
+{% endfor %}
