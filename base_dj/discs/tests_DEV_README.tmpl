@@ -1,0 +1,32 @@
+Developer README
+================
+
+Usage
+-----
+
+Suppose you have the following tests folder structure:
+
+my_module/tests
+    fixtures
+        sale.py
+        data
+            foo.csv
+            baz.csv
+    test_my_sales.py
+
+You can load data like this:
+
+    from .fixtures.sale import main
+    from anthem.ctx import ContextWithEnv
+    [...]
+
+    def test_foo(self):
+        main(ContextWithEnv(self.env))
+
+{% for song in compilation.song_ids %}{% if song.has_records %}
+Involved modules by song `{{ song.name }}` ({{ song.model_name}}):
+
+{{ song._involved_modules_txt() }}{% endif %}
+
+
+{% endfor %}

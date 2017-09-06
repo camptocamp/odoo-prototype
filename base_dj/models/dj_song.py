@@ -10,6 +10,7 @@ from ..config import (
     SONG_TYPES,
     DEFAULT_PYTHON_CODE,
 )
+from collections import defaultdict
 
 
 class Song(models.Model):
@@ -67,7 +68,8 @@ class Song(models.Model):
             ('compute', '=', False),
         ]""",
     )
-    csv_path = fields.Char(default='data/{data_mode}/generated/{model}.csv')
+    csv_path = fields.Char(
+        default='data/{data_mode}/generated/{model_name}.csv')
     domain = fields.Char(default="[]")
     python_code = fields.Text(
         default=DEFAULT_PYTHON_CODE,
@@ -97,6 +99,7 @@ class Song(models.Model):
         comodel_name='dj.song.dependency',
         inverse_name='song_id',
     )
+    involved_modules = fields.Html(compute='_compute_involved_modules')
 
     @api.constrains('python_code')
     def _check_python_code(self):
@@ -179,6 +182,31 @@ class Song(models.Model):
         for item in self:
             item.records_count = len(item._get_exportable_records())
 
+    def _involved_modules(self):
+        mods = defaultdict(list)
+        for field in self._get_data_fields():
+            mods[field.modules].append(field.name)
+        return mods
+
+    def _involved_modules_txt(self):
+        val = self.involved_modules
+        to_strip = ('<b>', '</b>', '<span>', '</span>', )
+        for k in to_strip:
+            val = val.replace(k, '')
+        to_repl = ('<br />', '\n'), ('<br>', '\n')
+        for k, v in to_repl:
+            val = val.replace(k, v)
+        return val
+
+    @api.multi
+    @api.depends('model_id', 'model_fields_ids', 'model_fields_blacklist_ids')
+    def _compute_involved_modules(self):
+        for item in self:
+            txt = []
+            for mod, _fields in item._involved_modules().iteritems():
+                txt.append('<b>%s:</b> %s' % (mod, ', '.join(_fields)))
+            item.involved_modules = '<br />'.join(sorted(txt))
+
     @api.model
     def eval_domain(self):
         return safe_eval(self.domain) if self.domain else []
@@ -221,12 +249,19 @@ class Song(models.Model):
             return None
         return self.env.get(self.model_id.model)
 
+    def _path_interpolation_data(self):
+        data = self.read()[0]
+        # XXX: backward compat for existing songs
+        data['model'] = data['model_name']
+        return data
+
     def real_csv_path(self):
         """Final csv path into zip file."""
-        return self.csv_path.format(
-            model=self.song_model._name,
-            data_mode=self.compilation_id.data_mode,
-        )
+        path_data = self._path_interpolation_data()
+        path_data.update(self.compilation_id._path_interpolation_data())
+        if self.compilation_id.data_mode == 'test':
+            return u'data/{model_name}.csv'.format(**path_data)
+        return self.csv_path.format(**path_data)
 
     @api.multi
     def burn_track(self):
@@ -295,6 +330,8 @@ class Song(models.Model):
         ])
 
     def _get_all_fields(self):
+        if not self.song_model:
+            return []
         names = set(
             self.song_model.fields_get().keys()
         ).difference(set(SPECIAL_FIELDS))
@@ -305,12 +342,17 @@ class Song(models.Model):
             ('name', 'in', list(names)),
         ])
 
-    def get_csv_field_names(self):
-        """Retrieve CSV field names."""
-        field_names = ['id']
+    def _get_data_fields(self):
         _fields = self.model_fields_ids
         if not _fields:
             _fields = self._get_all_fields()
+        return _fields
+
+    def get_csv_field_names(self):
+        """Retrieve CSV field names."""
+        field_names = ['id']
+        _fields = self._get_data_fields()
+
         blacklisted = self.model_fields_blacklist_ids.mapped('name')
         for field in _fields:
             if field.name in blacklisted:
