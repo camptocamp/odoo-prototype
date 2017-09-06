@@ -11,8 +11,17 @@
 
   <menuitem
     parent="menu_dj_root"
+    id="menu_dj_collection"
+    name="Collections"
+    sequence="10"
+    action="action_dj_collection"
+    />
+
+  <menuitem
+    parent="menu_dj_root"
     id="menu_dj_compilation"
     name="Compilations"
+    sequence="20"
     action="action_dj_compilation"
     />
 
@@ -20,6 +29,7 @@
     parent="menu_dj_root"
     id="menu_dj_songs"
     name="Songs"
+    sequence="30"
     action="action_dj_songs"
     />
 
@@ -27,6 +37,7 @@
     parent="menu_dj_root"
     id="menu_dj_equalizer_xmlids"
     name="XMLID equalizer"
+    sequence="90"
     action="action_dj_equalizer_xmlids"
     />
 
@@ -34,6 +45,7 @@
     parent="menu_dj_root"
     id="menu_aka_company"
     name="Company aliases"
+    sequence="100"
     action="action_company_aka"
     />
 

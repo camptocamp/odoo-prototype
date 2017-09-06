@@ -1,0 +1,47 @@
+<odoo>
+  <record id="dj_collection_form" model="ir.ui.view">
+    <field name="name">DJ collection form</field>
+    <field name="model">dj.collection</field>
+    <field name="arch" type="xml">
+      <form string="Make songs">
+        <sheet>
+          <group name="main">
+            <field name="name"/>
+            <field name="album_ids" context="{'default_collection_id': active_id}">
+              <tree>
+                <field name="sequence" widget="handle" />
+                <field name="compilation_id" />
+              </tree>
+            </field>
+          </group>
+          <footer>
+            <button name="download_it" string="Burn and download" type="object" class="btn-primary"/>
+            <div name="share">
+              <p>or share download link (right click on it and hit 'Copy link address'):<br />
+              <field name="download_url" readonly="1" widget="url" /></p>
+            </div>
+          </footer>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="dj_collection_tree" model="ir.ui.view">
+    <field name="name">DJ collection tree</field>
+    <field name="model">dj.collection</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_dj_collection" model="ir.actions.act_window">
+    <field name="name">Collections</field>
+    <field name="type">ir.actions.act_window</field>
+    <field name="res_model">dj.collection</field>
+    <field name="view_type">form</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+</odoo>
