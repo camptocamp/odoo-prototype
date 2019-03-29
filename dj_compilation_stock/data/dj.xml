@@ -21,8 +21,8 @@
     <field name="sequence" eval="30" />
     <field name="song_type">load_csv_defer_parent</field>
     <field name="model_fields_blacklist_ids" eval="[(6,0,[
-      ref('stock.field_stock_location_complete_name'),
-      ref('stock.field_stock_location_child_ids')])]"/>
+      ref('stock.field_stock_location__complete_name'),
+      ref('stock.field_stock_location__child_ids')])]"/>
   </record>
 
   <record model="dj.song" id="dj_song_ir_sequence">
@@ -43,8 +43,8 @@
     <field name="model_id" ref="stock.model_stock_location_route"/>
     <field name="sequence" eval="60" />
     <field name="model_fields_blacklist_ids" eval="[(6,0,[
-      ref('stock.field_stock_location_route_pull_ids'),
-      ref('stock.field_stock_location_route_product_ids')])]"/>
+      ref('stock.field_stock_location_route__pull_ids'),
+      ref('stock.field_stock_location_route__product_ids')])]"/>
   </record>
 
   <record model="dj.song" id="dj_song_procurement_rule">
