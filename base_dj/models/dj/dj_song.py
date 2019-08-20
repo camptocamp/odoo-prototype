@@ -24,6 +24,7 @@ testing = tools.config.get('test_enable') or os.environ.get('ODOO_TEST_ENABLE')
 
 class Song(models.Model):
     _name = 'dj.song'
+    _description = 'DJ Song'
     _inherit = [
         'dj.template.mixin',
         'onchange.player.mixin',
@@ -112,6 +113,7 @@ class Song(models.Model):
         compute='_compute_records_count',
         readonly=True
     )
+    records_order = fields.Char(default='id asc')
     depends_on_ids = fields.One2many(
         string='Depends on',
         comodel_name='dj.song.dependency',
@@ -480,6 +482,8 @@ class Song(models.Model):
 
         blacklisted = self.model_fields_blacklist_ids.mapped('name')
         blacklisted.extend(self._dj_global_config('field_blacklist'))
+        if 'parent_path' in self.song_model:
+            blacklisted.append('parent_path')
         for field in _fields:
             if field.name in blacklisted:
                 continue
@@ -561,6 +565,7 @@ class Song(models.Model):
     def _get_exportable_records(self, order=None):
         if self.song_model is None:
             return []
+        order = order or self.records_order
         recs = self.song_model.search(self.eval_domain(), order=order)
         if self.python_code:
             recs2 = self.eval_python_code()
@@ -741,6 +746,7 @@ class Song(models.Model):
 
 class SongDependency(models.Model):
     _name = 'dj.song.dependency'
+    _description = 'DJ Song dependency'
     _rec_name = 'song_id'
 
     song_id = fields.Many2one(
